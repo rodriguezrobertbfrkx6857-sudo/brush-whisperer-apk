@@ -72,34 +72,34 @@ export function GenerationPanel({
   showStrength = false,
 }: GenerationPanelProps) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 md:space-y-4">
       <div>
-        <Label>提示词 *</Label>
+        <Label className="text-sm md:text-base">提示词 *</Label>
         <Textarea
           placeholder="描述你想生成的图片..."
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           disabled={disabled}
-          className="min-h-[100px] mt-2"
+          className="min-h-[80px] md:min-h-[100px] mt-2 text-base"
         />
       </div>
 
       <div>
-        <Label>负面提示词</Label>
+        <Label className="text-sm md:text-base">负面提示词</Label>
         <Textarea
           placeholder="不想在图片中出现的内容..."
           value={negativePrompt}
           onChange={(e) => setNegativePrompt(e.target.value)}
           disabled={disabled}
-          className="min-h-[80px] mt-2"
+          className="min-h-[60px] md:min-h-[80px] mt-2 text-base"
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
         <div>
-          <Label>风格</Label>
+          <Label className="text-sm md:text-base">风格</Label>
           <Select value={style} onValueChange={setStyle} disabled={disabled}>
-            <SelectTrigger className="mt-2">
+            <SelectTrigger className="mt-2 h-11 text-base">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -113,9 +113,9 @@ export function GenerationPanel({
         </div>
 
         <div>
-          <Label>模型</Label>
+          <Label className="text-sm md:text-base">模型</Label>
           <Select value={model} onValueChange={setModel} disabled={disabled}>
-            <SelectTrigger className="mt-2">
+            <SelectTrigger className="mt-2 h-11 text-base">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -129,7 +129,7 @@ export function GenerationPanel({
         </div>
 
         <div>
-          <Label>尺寸</Label>
+          <Label className="text-sm md:text-base">尺寸</Label>
           <Select
             value={`${width}x${height}`}
             onValueChange={(value) => {
@@ -139,7 +139,7 @@ export function GenerationPanel({
             }}
             disabled={disabled}
           >
-            <SelectTrigger className="mt-2">
+            <SelectTrigger className="mt-2 h-11 text-base">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -153,20 +153,20 @@ export function GenerationPanel({
         </div>
 
         <div>
-          <Label>随机种子 (可选)</Label>
+          <Label className="text-sm md:text-base">随机种子 (可选)</Label>
           <Input
             type="number"
             placeholder="留空随机"
             value={seed}
             onChange={(e) => setSeed(e.target.value)}
             disabled={disabled}
-            className="mt-2"
+            className="mt-2 h-11 text-base"
           />
         </div>
       </div>
 
       <div>
-        <Label>推理步数: {steps}</Label>
+        <Label className="text-sm md:text-base">推理步数: {steps}</Label>
         <Slider
           value={[steps]}
           onValueChange={([value]) => setSteps(value)}
@@ -174,13 +174,13 @@ export function GenerationPanel({
           max={50}
           step={5}
           disabled={disabled}
-          className="mt-2"
+          className="mt-3"
         />
       </div>
 
       {showStrength && (
         <div>
-          <Label>强度: {strength.toFixed(2)}</Label>
+          <Label className="text-sm md:text-base">强度: {strength.toFixed(2)}</Label>
           <Slider
             value={[strength]}
             onValueChange={([value]) => setStrength(value)}
@@ -188,7 +188,7 @@ export function GenerationPanel({
             max={1}
             step={0.05}
             disabled={disabled}
-            className="mt-2"
+            className="mt-3"
           />
         </div>
       )}

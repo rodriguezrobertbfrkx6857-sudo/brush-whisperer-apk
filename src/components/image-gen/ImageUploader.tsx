@@ -92,11 +92,11 @@ export function ImageUploader({
 
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium">{label}</label>
+      <label className="text-sm md:text-base font-medium">{label}</label>
       
       {!imageUrl ? (
         <Card
-          className={`border-2 border-dashed p-8 text-center cursor-pointer transition-colors ${
+          className={`border-2 border-dashed p-6 md:p-8 text-center cursor-pointer transition-colors touch-manipulation active:scale-95 ${
             isDragging ? 'border-primary bg-primary/5' : 'border-border'
           } ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:border-primary'}`}
           onDragOver={(e) => {
@@ -107,8 +107,8 @@ export function ImageUploader({
           onDrop={handleDrop}
           onClick={handleClick}
         >
-          <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">
+          <Upload className="w-6 h-6 md:w-8 md:h-8 mx-auto mb-2 text-muted-foreground" />
+          <p className="text-sm md:text-base text-muted-foreground">
             点击或拖拽上传图片
           </p>
           <input
@@ -143,7 +143,7 @@ export function ImageUploader({
           <Button
             variant="destructive"
             size="icon"
-            className="absolute top-2 right-2"
+            className="absolute top-2 right-2 h-9 w-9 md:h-10 md:w-10 touch-manipulation active:scale-95 transition-transform"
             onClick={handleRemove}
             disabled={disabled}
           >

@@ -102,31 +102,31 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen w-full p-4 md:p-8">
+    <div className="min-h-screen w-full p-3 md:p-8 pb-safe">
       <div className="max-w-7xl mx-auto">
-        <header className="text-center mb-8 animate-fadeIn">
-          <div className="inline-flex items-center gap-2 mb-4">
-            <Sparkles className="w-8 h-8 text-primary" />
-            <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
+        <header className="text-center mb-6 md:mb-8 animate-fadeIn">
+          <div className="inline-flex items-center gap-2 mb-3">
+            <Sparkles className="w-6 h-6 md:w-8 md:h-8 text-primary" />
+            <h1 className="text-3xl md:text-6xl font-bold bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
               AI 图像工作室
             </h1>
           </div>
-          <p className="text-lg md:text-xl text-muted-foreground">
+          <p className="text-base md:text-xl text-muted-foreground px-4">
             Stable Diffusion XL · ControlNet · 专业级图像生成
           </p>
         </header>
 
-        <Tabs defaultValue="generate" className="space-y-6">
-          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
-            <TabsTrigger value="generate">生成</TabsTrigger>
-            <TabsTrigger value="history">
-              <History className="w-4 h-4 mr-2" />
-              历史记录
+        <Tabs defaultValue="generate" className="space-y-4 md:space-y-6">
+          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 h-12">
+            <TabsTrigger value="generate" className="text-base">生成</TabsTrigger>
+            <TabsTrigger value="history" className="text-base">
+              <History className="w-4 h-4 mr-1 md:mr-2" />
+              历史
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="generate" className="space-y-6">
-            <Card className="p-6">
+          <TabsContent value="generate" className="space-y-4 md:space-y-6">
+            <Card className="p-4 md:p-6">
               <ModeSelector 
                 selectedMode={mode} 
                 onModeChange={setMode}
@@ -134,9 +134,9 @@ const Index = () => {
               />
             </Card>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-4">参数设置</h2>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+              <Card className="p-4 md:p-6">
+                <h2 className="text-lg md:text-xl font-semibold mb-4">参数设置</h2>
                 <GenerationPanel
                   prompt={prompt}
                   setPrompt={setPrompt}
@@ -201,7 +201,7 @@ const Index = () => {
                 <Button
                   onClick={handleGenerate}
                   disabled={isGenerating || !prompt.trim()}
-                  className="w-full h-12 text-lg font-semibold mt-6 bg-gradient-to-r from-primary to-accent"
+                  className="w-full h-14 text-base md:text-lg font-semibold mt-6 bg-gradient-to-r from-primary to-accent touch-manipulation active:scale-95 transition-transform"
                 >
                   {isGenerating ? (
                     <>
@@ -217,8 +217,8 @@ const Index = () => {
                 </Button>
               </Card>
 
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-4">生成结果</h2>
+              <Card className="p-4 md:p-6">
+                <h2 className="text-lg md:text-xl font-semibold mb-4">生成结果</h2>
                 {generatedImage ? (
                   <div className="space-y-4">
                     <img 
@@ -228,7 +228,7 @@ const Index = () => {
                     />
                     <Button
                       variant="outline"
-                      className="w-full"
+                      className="w-full h-12 touch-manipulation active:scale-95 transition-transform"
                       onClick={() => {
                         const a = document.createElement('a');
                         a.href = generatedImage;
@@ -254,8 +254,8 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="history">
-            <Card className="p-6">
-              <h2 className="text-xl font-semibold mb-4">生成历史</h2>
+            <Card className="p-4 md:p-6">
+              <h2 className="text-lg md:text-xl font-semibold mb-4">生成历史</h2>
               <HistoryPanel />
             </Card>
           </TabsContent>

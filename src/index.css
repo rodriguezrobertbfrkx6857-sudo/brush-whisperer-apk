@@ -111,6 +111,18 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
     background: linear-gradient(180deg, hsl(var(--background)), hsl(270 100% 99%));
     min-height: 100vh;
+    /* 移动端优化 */
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  
+  /* 安全区域支持（iOS 刘海屏等） */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
   }
 
   @keyframes shimmer {
