@@ -34,6 +34,38 @@ const Index = () => {
   const [controlImage, setControlImage] = useState<string | null>(null);
   const [controlnetType, setControlnetType] = useState("canny");
   const [loraModels, setLoraModels] = useState<string[]>([]);
+  const [isEnhancing, setIsEnhancing] = useState(false);
+  const [useEnhancement, setUseEnhancement] = useState(true);
+
+  const handleEnhancePrompt = async () => {
+    if (!prompt.trim()) {
+      toast.error("请先输入提示词");
+      return;
+    }
+
+    setIsEnhancing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('enhance-prompt', {
+        body: { prompt, mode, style }
+      });
+
+      if (error) {
+        console.error('Enhancement error:', error);
+        toast.error("提示词优化失败");
+        return;
+      }
+
+      if (data?.enhancedPrompt) {
+        setPrompt(data.enhancedPrompt);
+        toast.success("提示词已优化！");
+      }
+    } catch (error) {
+      console.error('Error enhancing prompt:', error);
+      toast.error("优化失败");
+    } finally {
+      setIsEnhancing(false);
+    }
+  };
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
@@ -57,11 +89,28 @@ const Index = () => {
     }
 
     setIsGenerating(true);
+    
+    // 如果启用了自动增强，先增强提示词
+    let finalPrompt = prompt;
+    if (useEnhancement && prompt.trim()) {
+      try {
+        const { data: enhanceData } = await supabase.functions.invoke('enhance-prompt', {
+          body: { prompt, mode, style }
+        });
+        if (enhanceData?.enhancedPrompt) {
+          finalPrompt = enhanceData.enhancedPrompt;
+          console.log('Using enhanced prompt:', finalPrompt);
+        }
+      } catch (e) {
+        console.log('Enhancement failed, using original prompt');
+      }
+    }
+    
     try {
       const { data, error } = await supabase.functions.invoke('sdxl-generate', {
         body: {
           mode,
-          prompt,
+          prompt: finalPrompt,
           negative_prompt: negativePrompt,
           image_url: sourceImage,
           mask_url: maskImage,
@@ -136,7 +185,18 @@ const Index = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
               <Card className="p-4 md:p-6">
-                <h2 className="text-lg md:text-xl font-semibold mb-4">参数设置</h2>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg md:text-xl font-semibold">参数设置</h2>
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs text-muted-foreground">智能增强</label>
+                    <input 
+                      type="checkbox" 
+                      checked={useEnhancement}
+                      onChange={(e) => setUseEnhancement(e.target.checked)}
+                      className="w-4 h-4"
+                    />
+                  </div>
+                </div>
                 <GenerationPanel
                   prompt={prompt}
                   setPrompt={setPrompt}
@@ -159,6 +219,27 @@ const Index = () => {
                   disabled={isGenerating}
                   showStrength={mode === 'img2img'}
                 />
+
+                <div className="mt-4 flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={handleEnhancePrompt}
+                    disabled={isEnhancing || !prompt.trim() || isGenerating}
+                    className="flex-1 h-11 touch-manipulation active:scale-95 transition-transform"
+                  >
+                    {isEnhancing ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        优化中...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="mr-2 h-4 w-4" />
+                        优化提示词
+                      </>
+                    )}
+                  </Button>
+                </div>
 
                 {mode !== 'text2img' && (
                   <div className="mt-4 space-y-4">

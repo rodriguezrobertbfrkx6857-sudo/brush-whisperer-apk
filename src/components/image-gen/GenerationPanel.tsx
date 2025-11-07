@@ -74,14 +74,18 @@ export function GenerationPanel({
   return (
     <div className="space-y-3 md:space-y-4">
       <div>
-        <Label className="text-sm md:text-base">提示词 *</Label>
+        <Label className="text-sm md:text-base">提示词 * (支持长文本)</Label>
         <Textarea
-          placeholder="描述你想生成的图片..."
+          placeholder="详细描述你想生成的图片，可以输入很长的描述..."
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           disabled={disabled}
-          className="min-h-[80px] md:min-h-[100px] mt-2 text-base"
+          className="min-h-[100px] md:min-h-[120px] mt-2 text-base"
+          maxLength={5000}
         />
+        <div className="text-xs text-muted-foreground mt-1">
+          {prompt.length} / 5000 字符
+        </div>
       </div>
 
       <div>
