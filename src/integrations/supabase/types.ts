@@ -14,7 +14,105 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      character_references: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          lora_path: string | null
+          name: string
+          reference_image_url: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          lora_path?: string | null
+          name: string
+          reference_image_url: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          lora_path?: string | null
+          name?: string
+          reference_image_url?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      generation_history: {
+        Row: {
+          character_reference_id: string | null
+          control_image_url: string | null
+          controlnet_type: string | null
+          created_at: string
+          height: number | null
+          id: string
+          lora_models: string[] | null
+          mask_image_url: string | null
+          mode: string
+          model: string | null
+          negative_prompt: string | null
+          original_image_url: string | null
+          prompt: string
+          result_image_url: string
+          seed: number | null
+          steps: number | null
+          strength: number | null
+          style: string | null
+          user_id: string | null
+          width: number | null
+        }
+        Insert: {
+          character_reference_id?: string | null
+          control_image_url?: string | null
+          controlnet_type?: string | null
+          created_at?: string
+          height?: number | null
+          id?: string
+          lora_models?: string[] | null
+          mask_image_url?: string | null
+          mode: string
+          model?: string | null
+          negative_prompt?: string | null
+          original_image_url?: string | null
+          prompt: string
+          result_image_url: string
+          seed?: number | null
+          steps?: number | null
+          strength?: number | null
+          style?: string | null
+          user_id?: string | null
+          width?: number | null
+        }
+        Update: {
+          character_reference_id?: string | null
+          control_image_url?: string | null
+          controlnet_type?: string | null
+          created_at?: string
+          height?: number | null
+          id?: string
+          lora_models?: string[] | null
+          mask_image_url?: string | null
+          mode?: string
+          model?: string | null
+          negative_prompt?: string | null
+          original_image_url?: string | null
+          prompt?: string
+          result_image_url?: string
+          seed?: number | null
+          steps?: number | null
+          strength?: number | null
+          style?: string | null
+          user_id?: string | null
+          width?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
