@@ -1,81 +1,96 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Sparkles, Download } from "lucide-react";
+import { Loader2, Sparkles, History } from "lucide-react";
+import { ModeSelector } from "@/components/image-gen/ModeSelector";
+import { GenerationPanel } from "@/components/image-gen/GenerationPanel";
+import { ImageUploader } from "@/components/image-gen/ImageUploader";
+import { HistoryPanel } from "@/components/image-gen/HistoryPanel";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
-const artStyles = [
-  { value: "none", label: "No Style (Default)" },
-  { value: "Realism", label: "写实风格 (Realism)" },
-  { value: "Impressionism", label: "印象派 (Impressionism)" },
-  { value: "Abstract", label: "抽象风格 (Abstract)" },
-  { value: "Surrealism", label: "超现实主义 (Surrealism)" },
-  { value: "Minimalism", label: "极简主义 (Minimalism)" },
-  { value: "Pop Art", label: "波普艺术 (Pop Art)" },
-  { value: "Black and White", label: "黑白风格 (Black & White)" },
-  { value: "Vintage Film", label: "复古胶片风 (Vintage/Film)" },
-  { value: "Cyberpunk", label: "赛博朋克风 (Cyberpunk)" },
-  { value: "Steampunk", label: "蒸汽朋克风 (Steampunk)" },
-  { value: "Anime", label: "动漫/卡通风 (Anime/Cartoon)" },
-  { value: "Watercolor", label: "水彩风 (Watercolor)" },
-  { value: "Oil Painting", label: "油画风 (Oil Painting)" },
-  { value: "Fantasy", label: "幻想风 (Fantasy)" },
-  { value: "3D Render", label: "3D渲染风 (3D Render)" },
-];
-
-interface GeneratedImage {
-  url: string;
-  prompt: string;
-  style: string;
-  timestamp: number;
-}
+type Mode = 'text2img' | 'img2img' | 'inpaint' | 'controlnet';
 
 const Index = () => {
+  const [mode, setMode] = useState<Mode>('text2img');
   const [prompt, setPrompt] = useState("");
-  const [selectedStyle, setSelectedStyle] = useState("none");
+  const [negativePrompt, setNegativePrompt] = useState("nsfw, low quality, bad anatomy, blurry");
+  const [steps, setSteps] = useState(30);
+  const [strength, setStrength] = useState(0.75);
+  const [width, setWidth] = useState(1024);
+  const [height, setHeight] = useState(1024);
+  const [style, setStyle] = useState("none");
+  const [model, setModel] = useState("stability-ai/sdxl");
+  const [seed, setSeed] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
+  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  
+  // Mode-specific states
+  const [sourceImage, setSourceImage] = useState<string | null>(null);
+  const [maskImage, setMaskImage] = useState<string | null>(null);
+  const [controlImage, setControlImage] = useState<string | null>(null);
+  const [controlnetType, setControlnetType] = useState("canny");
+  const [loraModels, setLoraModels] = useState<string[]>([]);
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
-      toast.error("请输入图片描述");
+      toast.error("请输入提示词");
+      return;
+    }
+
+    if ((mode === 'img2img' || mode === 'inpaint') && !sourceImage) {
+      toast.error("请上传源图片");
+      return;
+    }
+
+    if (mode === 'inpaint' && !maskImage) {
+      toast.error("请绘制遮罩");
+      return;
+    }
+
+    if (mode === 'controlnet' && !controlImage) {
+      toast.error("请上传控制图片");
       return;
     }
 
     setIsGenerating(true);
     try {
-      const { data, error } = await supabase.functions.invoke('generate-image', {
-        body: { prompt, style: selectedStyle }
+      const { data, error } = await supabase.functions.invoke('sdxl-generate', {
+        body: {
+          mode,
+          prompt,
+          negative_prompt: negativePrompt,
+          image_url: sourceImage,
+          mask_url: maskImage,
+          control_image_url: controlImage,
+          controlnet_type: mode === 'controlnet' ? controlnetType : undefined,
+          lora_models: loraModels.length > 0 ? loraModels : undefined,
+          steps,
+          strength,
+          width,
+          height,
+          seed: seed ? parseInt(seed) : undefined,
+          style,
+          model,
+        }
       });
 
       if (error) {
         console.error('Function error:', error);
-        toast.error("生成图片失败，请重试");
+        toast.error("生成失败，请重试");
         return;
       }
 
       if (data?.error) {
-        if (data.error.includes('Rate limit')) {
-          toast.error("请求过于频繁，请稍后再试");
-        } else if (data.error.includes('Payment')) {
-          toast.error("需要充值积分才能继续使用");
-        } else {
-          toast.error(data.error);
-        }
+        toast.error(data.error);
         return;
       }
 
       if (data?.imageUrl) {
-        const newImage: GeneratedImage = {
-          url: data.imageUrl,
-          prompt,
-          style: selectedStyle,
-          timestamp: Date.now()
-        };
-        setGeneratedImages(prev => [newImage, ...prev]);
+        setGeneratedImage(data.imageUrl);
         toast.success("图片生成成功！");
       }
     } catch (error) {
@@ -86,149 +101,165 @@ const Index = () => {
     }
   };
 
-  const handleDownload = async (imageUrl: string, index: number) => {
-    try {
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `ai-image-${index + 1}.png`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-      toast.success("图片下载成功！");
-    } catch (error) {
-      console.error('Download error:', error);
-      toast.error("下载失败，请重试");
-    }
-  };
-
   return (
     <div className="min-h-screen w-full p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <header className="text-center mb-8 md:mb-12 animate-fadeIn">
+        <header className="text-center mb-8 animate-fadeIn">
           <div className="inline-flex items-center gap-2 mb-4">
             <Sparkles className="w-8 h-8 text-primary" />
             <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
-              AI 图片生成器
+              AI 图像工作室
             </h1>
           </div>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-            用文字创造艺术，让想象成为现实
+          <p className="text-lg md:text-xl text-muted-foreground">
+            Stable Diffusion XL · ControlNet · 专业级图像生成
           </p>
         </header>
 
-        {/* Generation Card */}
-        <Card className="p-6 md:p-8 mb-8 shadow-card backdrop-blur-sm bg-card/95 animate-fadeIn" style={{ animationDelay: '0.1s' }}>
-          <div className="space-y-6">
-            <div>
-              <label className="text-sm font-medium mb-2 block">
-                图片描述
-              </label>
-              <Textarea
-                placeholder="描述你想要生成的图片... 例如：一只在森林中奔跑的狐狸"
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                className="min-h-[120px] resize-none text-base"
+        <Tabs defaultValue="generate" className="space-y-6">
+          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
+            <TabsTrigger value="generate">生成</TabsTrigger>
+            <TabsTrigger value="history">
+              <History className="w-4 h-4 mr-2" />
+              历史记录
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="generate" className="space-y-6">
+            <Card className="p-6">
+              <ModeSelector 
+                selectedMode={mode} 
+                onModeChange={setMode}
                 disabled={isGenerating}
               />
-            </div>
+            </Card>
 
-            <div>
-              <label className="text-sm font-medium mb-2 block">
-                艺术风格
-              </label>
-              <Select value={selectedStyle} onValueChange={setSelectedStyle} disabled={isGenerating}>
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {artStyles.map((style) => (
-                    <SelectItem key={style.value} value={style.value}>
-                      {style.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card className="p-6">
+                <h2 className="text-xl font-semibold mb-4">参数设置</h2>
+                <GenerationPanel
+                  prompt={prompt}
+                  setPrompt={setPrompt}
+                  negativePrompt={negativePrompt}
+                  setNegativePrompt={setNegativePrompt}
+                  steps={steps}
+                  setSteps={setSteps}
+                  strength={strength}
+                  setStrength={setStrength}
+                  width={width}
+                  setWidth={setWidth}
+                  height={height}
+                  setHeight={setHeight}
+                  style={style}
+                  setStyle={setStyle}
+                  model={model}
+                  setModel={setModel}
+                  seed={seed}
+                  setSeed={setSeed}
+                  disabled={isGenerating}
+                  showStrength={mode === 'img2img'}
+                />
 
-            <Button
-              onClick={handleGenerate}
-              disabled={isGenerating || !prompt.trim()}
-              className="w-full h-12 text-lg font-semibold bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity"
-            >
-              {isGenerating ? (
-                <>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  生成中...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="mr-2 h-5 w-5" />
-                  生成图片
-                </>
-              )}
-            </Button>
-          </div>
-        </Card>
-
-        {/* Generated Images Gallery */}
-        {generatedImages.length > 0 && (
-          <div className="space-y-4">
-            <h2 className="text-2xl font-bold">生成的图片</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {generatedImages.map((image, index) => (
-                <Card 
-                  key={image.timestamp} 
-                  className="overflow-hidden group animate-fadeIn shadow-card hover:shadow-glow transition-all duration-300"
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                >
-                  <div className="relative aspect-square">
-                    <img
-                      src={image.url}
-                      alt={image.prompt}
-                      className="w-full h-full object-cover"
+                {mode !== 'text2img' && (
+                  <div className="mt-4 space-y-4">
+                    <ImageUploader
+                      label={mode === 'controlnet' ? "控制图片" : "源图片"}
+                      imageUrl={mode === 'controlnet' ? controlImage : sourceImage}
+                      onImageChange={mode === 'controlnet' ? setControlImage : setSourceImage}
+                      disabled={isGenerating}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="absolute bottom-0 left-0 right-0 p-4">
-                        <Button
-                          size="sm"
-                          onClick={() => handleDownload(image.url, index)}
-                          className="w-full bg-primary/90 hover:bg-primary"
-                        >
-                          <Download className="mr-2 h-4 w-4" />
-                          下载图片
-                        </Button>
+
+                    {mode === 'inpaint' && (
+                      <ImageUploader
+                        label="遮罩 (在白色区域绘制)"
+                        imageUrl={maskImage}
+                        onImageChange={setMaskImage}
+                        disabled={isGenerating}
+                        allowMask={true}
+                      />
+                    )}
+
+                    {mode === 'controlnet' && (
+                      <div>
+                        <Label>ControlNet 类型</Label>
+                        <Select value={controlnetType} onValueChange={setControlnetType} disabled={isGenerating}>
+                          <SelectTrigger className="mt-2">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="canny">Canny 边缘</SelectItem>
+                            <SelectItem value="depth">深度图</SelectItem>
+                            <SelectItem value="pose">姿态</SelectItem>
+                            <SelectItem value="scribble">涂鸦</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
-                    </div>
-                  </div>
-                  <div className="p-4 space-y-2">
-                    <p className="text-sm font-medium line-clamp-2">{image.prompt}</p>
-                    {image.style !== 'none' && (
-                      <p className="text-xs text-muted-foreground">
-                        风格: {artStyles.find(s => s.value === image.style)?.label}
-                      </p>
                     )}
                   </div>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
+                )}
 
-        {generatedImages.length === 0 && (
-          <div className="text-center py-16 animate-fadeIn" style={{ animationDelay: '0.2s' }}>
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-4">
-              <Sparkles className="w-10 h-10 text-primary" />
+                <Button
+                  onClick={handleGenerate}
+                  disabled={isGenerating || !prompt.trim()}
+                  className="w-full h-12 text-lg font-semibold mt-6 bg-gradient-to-r from-primary to-accent"
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      生成中...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="mr-2 h-5 w-5" />
+                      生成图片
+                    </>
+                  )}
+                </Button>
+              </Card>
+
+              <Card className="p-6">
+                <h2 className="text-xl font-semibold mb-4">生成结果</h2>
+                {generatedImage ? (
+                  <div className="space-y-4">
+                    <img 
+                      src={generatedImage} 
+                      alt="Generated" 
+                      className="w-full rounded-lg shadow-lg"
+                    />
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => {
+                        const a = document.createElement('a');
+                        a.href = generatedImage;
+                        a.download = 'generated.png';
+                        a.click();
+                      }}
+                    >
+                      下载图片
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="aspect-square flex items-center justify-center bg-muted rounded-lg">
+                    <div className="text-center">
+                      <Sparkles className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                      <p className="text-muted-foreground">
+                        生成的图片将显示在这里
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </Card>
             </div>
-            <p className="text-lg text-muted-foreground">
-              还没有生成图片，输入描述开始创作吧！
-            </p>
-          </div>
-        )}
+          </TabsContent>
+
+          <TabsContent value="history">
+            <Card className="p-6">
+              <h2 className="text-xl font-semibold mb-4">生成历史</h2>
+              <HistoryPanel />
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
