@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.1ed35ccdb61d4065bea4a099230473ed',
+  appId: 'com.lovable.aiimageapp',
   appName: 'AI图片生成器',
   webDir: 'dist',
   server: {

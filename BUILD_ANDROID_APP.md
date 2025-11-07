@@ -47,7 +47,7 @@ npx cap init
 
 如果提示输入信息，使用以下值：
 - App name: **AI图片生成器**
-- App ID: **app.lovable.1ed35ccdb61d4065bea4a099230473ed**
+- App ID: **com.lovable.aiimageapp**
 
 ### 5. 添加Android平台
 
@@ -117,7 +117,7 @@ npx cap open android
 1. 编辑 `capacitor.config.ts`，删除或注释掉 `server` 部分：
 ```typescript
 const config: CapacitorConfig = {
-  appId: 'app.lovable.1ed35ccdb61d4065bea4a099230473ed',
+  appId: 'com.lovable.aiimageapp',
   appName: 'AI图片生成器',
   webDir: 'dist',
   // 注释掉以下部分用于生产构建
